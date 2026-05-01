@@ -1,0 +1,857 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>অ্যাডমিন প্যানেল — সাজ্জাদ ইউনুস</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@400;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --ink:#1a1208;--ink-soft:#3d2e1a;--ink-muted:#7a6a52;
+      --paper:#f8f4ee;--paper-warm:#f2ead8;--paper-border:#e0d5c0;
+      --accent:#8b1a1a;--accent-l:#c0392b;
+      --gold:#b8860b;--gold-l:#d4a017;
+      --green:#2d6a4f;--green-l:#40916c;
+      --sidebar:#16100a;--sw:260px;
+      --sans:'Hind Siliguri',sans-serif;
+      --serif:'Noto Serif Bengali','Hind Siliguri',serif;
+      --display:'Playfair Display','Hind Siliguri',serif;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{background:#ede8df;font-family:var(--sans);color:var(--ink);min-height:100vh}
+
+    /* ── LOGIN ── */
+    #loginScreen{position:fixed;inset:0;background:var(--ink);display:flex;align-items:center;justify-content:center;z-index:9999;flex-direction:column}
+    #loginScreen.gone{display:none}
+    .login-box{background:var(--paper);padding:3rem;width:min(420px,90vw);text-align:center}
+    .login-logo{font-family:var(--display);font-size:2.5rem;font-weight:700;font-style:italic;color:var(--ink)}
+    .login-logo em{color:var(--accent)}
+    .login-sub{font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-muted);margin:.5rem 0 2rem}
+    .login-box input{width:100%;border:1.5px solid var(--paper-border);padding:.8rem 1rem;font-family:var(--sans);font-size:1rem;color:var(--ink);outline:none;margin-bottom:1rem;background:#fff}
+    .login-box input:focus{border-color:var(--accent)}
+    .login-btn{width:100%;background:var(--accent);color:#fff;border:none;padding:.85rem;font-family:var(--sans);font-size:.95rem;font-weight:600;letter-spacing:.1em;cursor:pointer;transition:background .2s}
+    .login-btn:hover{background:var(--accent-l)}
+    .login-err{color:var(--accent);font-size:.82rem;margin-top:.75rem;display:none}
+    .login-hint{color:var(--ink-muted);font-size:.75rem;margin-top:1rem;opacity:.6}
+
+    /* ── LAYOUT ── */
+    #app{display:none;min-height:100vh}
+    #app.show{display:flex}
+    aside{width:var(--sw);background:var(--sidebar);color:#fff;display:flex;flex-direction:column;min-height:100vh;position:sticky;top:0;height:100vh;overflow-y:auto;flex-shrink:0}
+    .sb-brand{padding:1.75rem 1.5rem 1.25rem;border-bottom:1px solid rgba(255,255,255,.07)}
+    .sb-name{font-family:var(--display);font-size:1.2rem;font-weight:700;font-style:italic;color:#fff}
+    .sb-name em{color:var(--gold-l)}
+    .sb-role{font-size:.65rem;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-top:.2rem}
+    .sb-nav{flex:1;padding:1rem 0}
+    .sb-section{font-size:.6rem;letter-spacing:.25em;text-transform:uppercase;color:rgba(255,255,255,.2);padding:.75rem 1.5rem .25rem}
+    .nav-btn{display:flex;align-items:center;gap:.75rem;padding:.7rem 1.5rem;cursor:pointer;color:rgba(255,255,255,.55);font-size:.88rem;font-weight:500;border:none;background:none;width:100%;text-align:left;transition:all .18s}
+    .nav-btn:hover{background:rgba(255,255,255,.05);color:#fff}
+    .nav-btn.on{background:rgba(139,26,26,.35);color:#fff;border-left:3px solid var(--accent)}
+    .nav-btn .ic{font-size:.95rem;width:18px;text-align:center}
+    .sb-foot{padding:1.25rem 1.5rem;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:.5rem}
+    .sb-link{display:flex;align-items:center;gap:.6rem;font-size:.8rem;color:rgba(255,255,255,.35);cursor:pointer;background:none;border:none;text-decoration:none;transition:color .2s;padding:.35rem 0}
+    .sb-link:hover{color:#fff}
+
+    /* ── MAIN ── */
+    main{flex:1;padding:2rem;overflow-y:auto}
+    .pg{display:none}
+    .pg.on{display:block}
+    .ph{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.75rem;gap:1rem;flex-wrap:wrap}
+    .pt{font-family:var(--display);font-size:1.7rem;font-weight:700;color:var(--ink)}
+    .ps{font-size:.82rem;color:var(--ink-muted);margin-top:.2rem}
+
+    /* ── BUTTONS ── */
+    .btn{font-family:var(--sans);font-size:.83rem;font-weight:600;letter-spacing:.06em;padding:.58rem 1.3rem;border:none;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center;gap:.4rem}
+    .btn-p{background:var(--accent);color:#fff}
+    .btn-p:hover{background:var(--accent-l)}
+    .btn-g{background:var(--green);color:#fff}
+    .btn-g:hover{background:var(--green-l)}
+    .btn-o{background:transparent;border:1.5px solid var(--paper-border);color:var(--ink-soft)}
+    .btn-o:hover{border-color:var(--accent);color:var(--accent)}
+    .btn-d{background:transparent;border:1.5px solid #e74c3c;color:#e74c3c;font-size:.77rem;padding:.4rem .9rem}
+    .btn-d:hover{background:#e74c3c;color:#fff}
+    .btn-sm{padding:.38rem .9rem;font-size:.77rem}
+    .btn:disabled{opacity:.55;cursor:not-allowed}
+
+    /* ── STATS ── */
+    .stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:1rem;margin-bottom:2rem}
+    .stat{background:#fff;border:1px solid var(--paper-border);padding:1.4rem;position:relative;overflow:hidden}
+    .stat::before{content:'';position:absolute;top:0;left:0;width:3px;height:100%;background:var(--accent)}
+    .stat-n{font-family:var(--display);font-size:2.8rem;font-weight:700;color:var(--ink);line-height:1}
+    .stat-l{font-size:.72rem;color:var(--ink-muted);letter-spacing:.12em;text-transform:uppercase;margin-top:.4rem}
+
+    /* ── TABLE ── */
+    .tbl-ctrl{display:flex;gap:.75rem;margin-bottom:1.2rem;flex-wrap:wrap}
+    .tbl-search{flex:1;min-width:180px;border:1.5px solid var(--paper-border);padding:.55rem .9rem;font-family:var(--sans);font-size:.88rem;color:var(--ink);background:#fff;outline:none}
+    .tbl-search:focus{border-color:var(--accent)}
+    .tbl-sel{border:1.5px solid var(--paper-border);padding:.55rem .9rem;font-family:var(--sans);font-size:.82rem;color:var(--ink-soft);background:#fff;outline:none;cursor:pointer}
+    table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--paper-border)}
+    th{background:var(--paper-warm);font-size:.7rem;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--ink-muted);padding:.8rem 1rem;text-align:left;border-bottom:1px solid var(--paper-border)}
+    td{padding:.85rem 1rem;border-bottom:1px solid var(--paper-border);font-size:.88rem;vertical-align:middle}
+    tr:last-child td{border-bottom:none}
+    tr:hover td{background:#faf7f2}
+    .tbl-title{font-weight:600;color:var(--ink);max-width:260px}
+    .tbl-exc{font-size:.76rem;color:var(--ink-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:220px}
+    .badge{font-size:.64rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:.22rem .6rem;white-space:nowrap}
+    .b-pub{background:rgba(45,106,79,.12);color:var(--green)}
+    .b-draft{background:rgba(139,26,26,.1);color:var(--accent)}
+    .b-cat{background:rgba(184,134,11,.12);color:var(--gold)}
+    .tbl-actions{display:flex;gap:.4rem;align-items:center}
+
+    /* ── EDITOR ── */
+    .ed-layout{display:grid;grid-template-columns:1fr 300px;gap:1.4rem;align-items:start}
+    .ed-main{background:#fff;border:1px solid var(--paper-border);padding:1.75rem}
+    .ed-side{display:flex;flex-direction:column;gap:1.1rem}
+    .panel{background:#fff;border:1px solid var(--paper-border);padding:1.4rem}
+    .panel-title{font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:1rem;padding-bottom:.65rem;border-bottom:1px solid var(--paper-border)}
+    .field{display:flex;flex-direction:column;gap:.3rem;margin-bottom:1rem}
+    .field:last-child{margin-bottom:0}
+    .field label{font-size:.68rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-muted)}
+    .field input,.field select,.field textarea{border:1.5px solid var(--paper-border);padding:.65rem .85rem;font-family:var(--sans);font-size:.92rem;color:var(--ink);outline:none;transition:border-color .2s;background:#fff;width:100%}
+    .field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+    .field textarea{min-height:120px;resize:vertical;line-height:1.7}
+    .title-inp{font-family:var(--serif);font-size:1.35rem;font-weight:600;border:none!important;border-bottom:2px solid var(--paper-border)!important;padding:.4rem 0!important;background:transparent!important}
+    .title-inp:focus{border-bottom-color:var(--accent)!important}
+    .char-c{font-size:.68rem;color:var(--ink-muted);text-align:right}
+
+    /* TOOLBAR */
+    .toolbar{display:flex;gap:.25rem;flex-wrap:wrap;padding:.5rem .6rem;background:var(--paper-warm);border:1.5px solid var(--paper-border);border-bottom:none}
+    .tb-btn{background:none;border:1px solid transparent;padding:.3rem .55rem;cursor:pointer;font-size:.82rem;color:var(--ink-soft);transition:all .15s;font-family:var(--sans)}
+    .tb-btn:hover{background:var(--paper-border);color:var(--ink)}
+    .tb-sep{width:1px;background:var(--paper-border);margin:0 .15rem;align-self:stretch}
+    .ed-area{width:100%;min-height:320px;border:1.5px solid var(--paper-border);padding:1rem;font-family:var(--sans);font-size:.97rem;color:var(--ink);outline:none;line-height:1.85;resize:vertical;background:#fff}
+    .ed-area:focus{border-color:var(--accent)}
+
+    /* TOGGLE */
+    .tog-row{display:flex;align-items:center;justify-content:space-between;padding:.55rem 0}
+    .tog-lbl{font-size:.88rem;color:var(--ink-soft)}
+    .tog{position:relative;width:42px;height:23px;cursor:pointer;flex-shrink:0}
+    .tog input{opacity:0;width:0;height:0;position:absolute}
+    .tog-track{position:absolute;inset:0;background:var(--paper-border);border-radius:23px;transition:background .22s}
+    .tog input:checked+.tog-track{background:var(--green)}
+    .tog-thumb{position:absolute;top:2.5px;left:2.5px;width:18px;height:18px;background:#fff;border-radius:50%;transition:left .22s;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+    .tog input:checked~.tog-thumb{left:21.5px}
+
+    /* IMAGE UPLOAD */
+    .img-upload-area{border:2px dashed var(--paper-border);padding:2rem 1rem;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:#fafaf8}
+    .img-upload-area:hover{border-color:var(--accent);background:rgba(139,26,26,.02)}
+    .img-upload-area.drag{border-color:var(--accent);background:rgba(139,26,26,.05)}
+    .img-upload-area input{position:absolute;inset:0;opacity:0;cursor:pointer}
+    .img-upload-icon{font-size:2rem;margin-bottom:.5rem}
+    .img-upload-text{font-size:.82rem;color:var(--ink-muted)}
+    .img-upload-text strong{color:var(--accent)}
+    .img-preview{width:100%;height:160px;object-fit:cover;display:block;margin-top:.75rem}
+    .img-preview-wrap{position:relative;margin-top:.75rem}
+    .img-remove{position:absolute;top:.4rem;right:.4rem;background:var(--accent);color:#fff;border:none;width:26px;height:26px;cursor:pointer;font-size:.85rem;display:flex;align-items:center;justify-content:center}
+    .img-uploading{font-size:.8rem;color:var(--ink-muted);margin-top:.5rem;text-align:center}
+    .img-url-input{margin-top:.75rem}
+
+    /* SETTINGS PAGE */
+    .settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+    .settings-panel{background:#fff;border:1px solid var(--paper-border);padding:1.75rem}
+    .settings-panel h3{font-family:var(--display);font-size:1.1rem;font-weight:700;margin-bottom:.4rem}
+    .settings-panel p{font-size:.8rem;color:var(--ink-muted);margin-bottom:1.25rem;line-height:1.6}
+    .settings-full{grid-column:1/-1}
+    .save-row{margin-top:1.25rem;display:flex;justify-content:flex-end;gap:.75rem;align-items:center}
+    .save-status{font-size:.8rem;color:var(--green);opacity:0;transition:opacity .3s}
+    .save-status.show{opacity:1}
+
+    /* RICH TEXTAREA for bio */
+    .rich-textarea{width:100%;border:1.5px solid var(--paper-border);padding:.7rem .9rem;font-family:var(--sans);font-size:.92rem;color:var(--ink);outline:none;transition:border-color .2s;resize:vertical;min-height:100px;line-height:1.7}
+    .rich-textarea:focus{border-color:var(--accent)}
+
+    /* EMPTY / LOADER */
+    .empty-row td{text-align:center;padding:3rem;color:var(--ink-muted)}
+    .loader-row td{text-align:center;padding:2rem}
+    .dots{display:inline-flex;gap:.4rem}
+    .dots span{width:7px;height:7px;background:var(--paper-border);border-radius:50%;animation:dp 1.2s infinite}
+    .dots span:nth-child(2){animation-delay:.2s}
+    .dots span:nth-child(3){animation-delay:.4s}
+    @keyframes dp{0%,80%,100%{opacity:.3;transform:scale(.8)}40%{opacity:1;transform:scale(1)}}
+
+    /* CONFIRM */
+    .confirm-ov{position:fixed;inset:0;background:rgba(26,18,8,.72);z-index:8888;display:none;align-items:center;justify-content:center}
+    .confirm-ov.open{display:flex}
+    .confirm-box{background:var(--paper);padding:2.5rem;max-width:400px;width:90%;text-align:center}
+    .confirm-box h3{font-family:var(--display);font-size:1.35rem;margin-bottom:.65rem}
+    .confirm-box p{font-family:var(--sans);color:var(--ink-muted);margin-bottom:1.75rem;font-size:.9rem}
+    .confirm-actions{display:flex;gap:.75rem;justify-content:center}
+
+    /* SETUP GUIDE */
+    .setup-guide{background:#fff;border:1px solid var(--paper-border);padding:2rem;margin-bottom:2rem}
+    .setup-guide h3{font-family:var(--display);font-size:1.3rem;font-weight:700;margin-bottom:1rem;color:var(--accent)}
+    .setup-steps{display:flex;flex-direction:column;gap:1rem;counter-reset:step}
+    .setup-step{display:flex;gap:1rem;align-items:flex-start;counter-increment:step}
+    .setup-step::before{content:counter(step);width:28px;height:28px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:700;flex-shrink:0;margin-top:.1rem}
+    .setup-step p{font-family:var(--sans);font-size:.9rem;color:var(--ink-soft);line-height:1.7}
+    .setup-step code{background:var(--paper-warm);padding:.15rem .4rem;font-family:monospace;font-size:.82rem;color:var(--accent)}
+    .sql-block{background:var(--ink);color:#e2d4b4;padding:1.25rem;font-family:monospace;font-size:.78rem;line-height:1.7;overflow-x:auto;margin-top:.75rem;white-space:pre}
+    .cred-inputs{display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-top:1.25rem}
+    .cred-field{display:flex;flex-direction:column;gap:.3rem}
+    .cred-field label{font-size:.68rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-muted)}
+    .cred-field input{border:1.5px solid var(--paper-border);padding:.6rem .85rem;font-family:monospace;font-size:.82rem;color:var(--ink);outline:none;background:#fff;transition:border-color .2s}
+    .cred-field input:focus{border-color:var(--accent)}
+
+    @media(max-width:900px){
+      aside{display:none} main{padding:1.25rem}
+      .ed-layout,.settings-grid,.cred-inputs{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo"><em>স</em>াজ্জাদ ইউনুস</div>
+    <div class="login-sub">অ্যাডমিন প্যানেল</div>
+    <input type="password" id="pw" placeholder="পাসওয়ার্ড" onkeydown="if(event.key==='Enter')doLogin()"/>
+    <button class="login-btn" onclick="doLogin()">প্রবেশ করুন →</button>
+    <div class="login-err" id="loginErr">ভুল পাসওয়ার্ড। আবার চেষ্টা করুন।</div>
+    <div class="login-hint">ডিফল্ট পাসওয়ার্ড: sajjad2025</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <aside>
+    <div class="sb-brand">
+      <div class="sb-name"><em>স</em>াজ্জাদ ইউনুস</div>
+      <div class="sb-role">কন্টেন্ট ম্যানেজমেন্ট সিস্টেম</div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-section">প্রধান</div>
+      <button class="nav-btn on" data-pg="dashboard"><span class="ic">◈</span> ড্যাশবোর্ড</button>
+      <button class="nav-btn" data-pg="posts"><span class="ic">✦</span> সব লেখা</button>
+      <button class="nav-btn" data-pg="editor"><span class="ic">✎</span> নতুন লেখা</button>
+      <div class="sb-section" style="margin-top:.75rem">সেটিং</div>
+      <button class="nav-btn" data-pg="settings"><span class="ic">⚙</span> সাইট সেটিং</button>
+      <button class="nav-btn" data-pg="setup"><span class="ic">🛠</span> Supabase সেটআপ</button>
+    </nav>
+    <div class="sb-foot">
+      <a class="sb-link" href="index.html" target="_blank"><span>↗</span> সাইট দেখুন</a>
+      <button class="sb-link" onclick="doLogout()"><span>⎋</span> লগআউট</button>
+    </div>
+  </aside>
+
+  <main>
+
+    <!-- DASHBOARD -->
+    <div class="pg on" id="pg-dashboard">
+      <div class="ph">
+        <div><div class="pt">ড্যাশবোর্ড</div><div class="ps">আপনার সাইটের সারসংক্ষেপ</div></div>
+        <button class="btn btn-p" onclick="goNewPost()">✎ নতুন লেখা</button>
+      </div>
+      <div class="stats" id="statsGrid"></div>
+      <div style="background:#fff;border:1px solid var(--paper-border);padding:1.4rem">
+        <div style="font-size:.68rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ink-muted);margin-bottom:1rem">সাম্প্রতিক লেখা</div>
+        <div id="recentList"></div>
+      </div>
+    </div>
+
+    <!-- POSTS LIST -->
+    <div class="pg" id="pg-posts">
+      <div class="ph">
+        <div><div class="pt">সব লেখা</div><div class="ps" id="postsCnt"></div></div>
+        <button class="btn btn-p" onclick="goNewPost()">✎ নতুন লেখা</button>
+      </div>
+      <div class="tbl-ctrl">
+        <input class="tbl-search" id="searchQ" placeholder="শিরোনাম খুঁজুন..." oninput="renderTable()"/>
+        <select class="tbl-sel" id="catF" onchange="renderTable()">
+          <option value="">সব বিভাগ</option>
+          <option value="probondho">প্রবন্ধ</option>
+          <option value="nibondho">নিবন্ধ</option>
+          <option value="column">কলাম</option>
+          <option value="research">গবেষণা</option>
+          <option value="onubad">অনুবাদ</option>
+          <option value="other">অন্যান্য</option>
+        </select>
+        <select class="tbl-sel" id="pubF" onchange="renderTable()">
+          <option value="">সব অবস্থা</option>
+          <option value="pub">প্রকাশিত</option>
+          <option value="draft">ড্রাফট</option>
+        </select>
+      </div>
+      <table>
+        <thead><tr><th>শিরোনাম</th><th>বিভাগ</th><th>তারিখ</th><th>অবস্থা</th><th>অ্যাকশন</th></tr></thead>
+        <tbody id="tblBody"></tbody>
+      </table>
+    </div>
+
+    <!-- EDITOR -->
+    <div class="pg" id="pg-editor">
+      <div class="ph">
+        <div><div class="pt" id="edTitle">নতুন লেখা</div><div class="ps" id="edSub">নতুন লেখা তৈরি করুন</div></div>
+        <div style="display:flex;gap:.6rem">
+          <button class="btn btn-o" onclick="saveDraft()">খসড়া</button>
+          <button class="btn btn-g" onclick="publishPost()" id="pubBtn">✓ প্রকাশ করুন</button>
+        </div>
+      </div>
+      <div class="ed-layout">
+        <div class="ed-main">
+          <div class="field">
+            <label>শিরোনাম *</label>
+            <input class="title-inp" id="eTitle" type="text" placeholder="লেখার শিরোনাম..." oninput="syncTitleCount()"/>
+            <div class="char-c" id="titleCnt">০</div>
+          </div>
+          <div class="field">
+            <label>সারসংক্ষেপ <span style="font-weight:400;text-transform:none;letter-spacing:0">(কার্ডে দেখাবে, সর্বোচ্চ ২০০ অক্ষর)</span></label>
+            <textarea id="eExcerpt" placeholder="লেখার একটি সংক্ষিপ্ত পরিচয়..." style="min-height:72px" oninput="syncExcCount()"></textarea>
+            <div class="char-c" id="exCnt">০ / ২০০</div>
+          </div>
+          <div class="field">
+            <label>মূল লেখা *</label>
+            <div class="toolbar">
+              <button class="tb-btn" onclick="fmt('bold')" title="Bold"><b>ব</b></button>
+              <button class="tb-btn" onclick="fmt('italic')" title="Italic"><i>ই</i></button>
+              <button class="tb-btn" onclick="fmt('underline')" title="Underline"><u>আ</u></button>
+              <div class="tb-sep"></div>
+              <button class="tb-btn" onclick="wrapBlock('h2')" title="শিরোনাম ২">H2</button>
+              <button class="tb-btn" onclick="wrapBlock('h3')" title="শিরোনাম ৩">H3</button>
+              <button class="tb-btn" onclick="fmt('formatBlock','p')" title="প্যারা">¶</button>
+              <div class="tb-sep"></div>
+              <button class="tb-btn" onclick="fmt('insertUnorderedList')" title="তালিকা">☰</button>
+              <button class="tb-btn" onclick="fmt('formatBlock','blockquote')" title="উদ্ধৃতি">❝</button>
+              <div class="tb-sep"></div>
+              <button class="tb-btn" onclick="fmt('removeFormat')" title="ফরম্যাট মুছুন">✕</button>
+            </div>
+            <div class="ed-area" id="eBody" contenteditable="true" spellcheck="false" placeholder="এখানে লিখুন..."></div>
+          </div>
+        </div>
+
+        <div class="ed-side">
+          <!-- Publish -->
+          <div class="panel">
+            <div class="panel-title">প্রকাশনা</div>
+            <div class="tog-row">
+              <span class="tog-lbl">প্রকাশিত করুন</span>
+              <label class="tog"><input type="checkbox" id="ePub" checked/><div class="tog-track"></div><div class="tog-thumb"></div></label>
+            </div>
+            <div class="tog-row">
+              <span class="tog-lbl">⭐ ফিচার্ড পোস্ট</span>
+              <label class="tog"><input type="checkbox" id="eFeat"/><div class="tog-track"></div><div class="tog-thumb"></div></label>
+            </div>
+          </div>
+
+          <!-- Category & Date -->
+          <div class="panel">
+            <div class="panel-title">বিভাগ ও তারিখ</div>
+            <div class="field">
+              <label>বিভাগ</label>
+              <select id="eCat">
+                <option value="probondho">প্রবন্ধ</option>
+                <option value="nibondho">নিবন্ধ</option>
+                <option value="column">কলাম</option>
+                <option value="research">গবেষণা</option>
+                <option value="onubad">অনুবাদ</option>
+                <option value="other">অন্যান্য</option>
+              </select>
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label>প্রকাশের তারিখ</label>
+              <input type="date" id="eDate"/>
+            </div>
+          </div>
+
+          <!-- Cover Image -->
+          <div class="panel">
+            <div class="panel-title">কভার ছবি</div>
+            <div class="img-upload-area" id="imgDrop" ondragover="imgDragOver(event)" ondragleave="imgDragLeave()" ondrop="imgDrop(event)">
+              <input type="file" id="imgFile" accept="image/*" onchange="handleImgFile(this.files[0])"/>
+              <div id="imgPlaceholder">
+                <div class="img-upload-icon">🖼️</div>
+                <div class="img-upload-text">ছবি টেনে এনে ছাড়ুন অথবা<br><strong>এখানে ক্লিক করুন</strong></div>
+                <div style="font-size:.72rem;color:var(--ink-muted);margin-top:.3rem">JPG, PNG, WebP — সর্বোচ্চ ৫ MB</div>
+              </div>
+              <div class="img-uploading" id="imgStatus"></div>
+            </div>
+            <div id="imgPreviewWrap" style="display:none" class="img-preview-wrap">
+              <img id="imgPreview" class="img-preview"/>
+              <button class="img-remove" onclick="removeImg()" title="ছবি সরান">✕</button>
+            </div>
+            <div class="field img-url-input">
+              <label>অথবা ছবির URL</label>
+              <input type="url" id="imgUrl" placeholder="https://..." onchange="setImgFromUrl(this.value)"/>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="panel" style="display:flex;flex-direction:column;gap:.65rem">
+            <button class="btn btn-g" style="width:100%;justify-content:center" onclick="publishPost()">✓ প্রকাশ করুন</button>
+            <button class="btn btn-o" style="width:100%;justify-content:center" onclick="saveDraft()">খসড়া রাখুন</button>
+            <button class="btn btn-o" style="width:100%;justify-content:center;color:var(--ink-muted)" onclick="clearEditor()">✕ পরিষ্কার করুন</button>
+            <input type="hidden" id="editingId"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="pg" id="pg-settings">
+      <div class="ph">
+        <div><div class="pt">সাইট সেটিং</div><div class="ps">এখানে পরিবর্তন করুন — সাথে সাথে সাইটে আপডেট হবে</div></div>
+      </div>
+      <div class="settings-grid">
+
+        <!-- Hero Section -->
+        <div class="settings-panel">
+          <h3>🏠 হিরো সেকশন</h3>
+          <p>প্রথম পাতার বড় অংশটি এখান থেকে নিয়ন্ত্রণ করুন</p>
+          <div class="field"><label>লেখকের নাম (সাইটে বড় করে দেখায়)</label><input type="text" id="s_hero_name" placeholder="সাজ্জাদ ইউনুস"/></div>
+          <div class="field"><label>ট্যাগলাইন (নামের নিচে)</label><input type="text" id="s_hero_subtitle" placeholder="লেখক • গবেষক • অনুবাদক"/></div>
+          <div class="field"><label>ব্যাজ টেক্সট (ছোট লেবেল)</label><input type="text" id="s_hero_badge" placeholder="লেখক · গবেষক · অনুবাদক"/></div>
+          <div class="field"><label>পরিচয় বাক্য</label><textarea id="s_hero_desc" placeholder="প্রবন্ধ, নিবন্ধ, কলাম..."></textarea></div>
+          <div class="save-row"><span class="save-status" id="st_hero">✓ সংরক্ষিত</span><button class="btn btn-g" onclick="saveSettings('hero')">সংরক্ষণ করুন</button></div>
+        </div>
+
+        <!-- Author / About -->
+        <div class="settings-panel">
+          <h3>👤 পরিচয় সেকশন</h3>
+          <p>আপনার সম্পর্কে তথ্য এখান থেকে আপডেট করুন</p>
+          <div class="field"><label>লেখকের নাম</label><input type="text" id="s_author_name" placeholder="সাজ্জাদ ইউনুস"/></div>
+          <div class="field"><label>ছবির নিচে ব্যাজ</label><input type="text" id="s_author_badge" placeholder="লেখক ও গবেষক"/></div>
+          <div class="field"><label>বায়ো (প্যারা আলাদা করতে দুটো Enter দিন)</label><textarea class="rich-textarea" id="s_author_bio" style="min-height:140px" placeholder="আমি একজন লেখক..."></textarea></div>
+          <div class="field"><label>ট্যাগসমূহ (কমা দিয়ে আলাদা করুন)</label><input type="text" id="s_author_tags" placeholder="প্রবন্ধ, নিবন্ধ, দর্শন"/></div>
+          <div class="field"><label>লেখকের ছবি URL</label><input type="url" id="s_author_photo" placeholder="https://..."/></div>
+          <div class="save-row"><span class="save-status" id="st_author">✓ সংরক্ষিত</span><button class="btn btn-g" onclick="saveSettings('author')">সংরক্ষণ করুন</button></div>
+        </div>
+
+        <!-- Quote -->
+        <div class="settings-panel">
+          <h3>💬 উদ্ধৃতি</h3>
+          <p>মাঝখানের গাঢ় স্ট্রিপে যে উদ্ধৃতিটি দেখায়</p>
+          <div class="field"><label>উদ্ধৃতি</label><textarea id="s_site_quote" placeholder="লেখা হলো নিজের সাথে..."></textarea></div>
+          <div class="field"><label>উদ্ধৃতির উৎস</label><input type="text" id="s_site_quote_author" placeholder="— সাজ্জাদ ইউনুস"/></div>
+          <div class="save-row"><span class="save-status" id="st_quote">✓ সংরক্ষিত</span><button class="btn btn-g" onclick="saveSettings('quote')">সংরক্ষণ করুন</button></div>
+        </div>
+
+        <!-- Contact -->
+        <div class="settings-panel">
+          <h3>📬 যোগাযোগ তথ্য</h3>
+          <p>যোগাযোগ সেকশনের তথ্য আপডেট করুন</p>
+          <div class="field"><label>পরিচয়মূলক টেক্সট</label><textarea id="s_contact_intro" style="min-height:72px" placeholder="আপনি পাঠক হোন..."></textarea></div>
+          <div class="field"><label>ইমেইল</label><input type="email" id="s_contact_email" placeholder="sajjad@example.com"/></div>
+          <div class="field"><label>Twitter/X হ্যান্ডেল</label><input type="text" id="s_contact_twitter" placeholder="@sajjad_yunus"/></div>
+          <div class="field"><label>LinkedIn URL</label><input type="url" id="s_contact_linkedin" placeholder="https://linkedin.com/in/..."/></div>
+          <div class="save-row"><span class="save-status" id="st_contact">✓ সংরক্ষিত</span><button class="btn btn-g" onclick="saveSettings('contact')">সংরক্ষণ করুন</button></div>
+        </div>
+
+        <!-- Site General -->
+        <div class="settings-panel settings-full">
+          <h3>🌐 সাইটের সাধারণ তথ্য</h3>
+          <p>ব্রাউজার ট্যাবে দেখানো শিরোনাম ও ফুটার কপিরাইট</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div class="field"><label>সাইট টাইটেল (browser tab)</label><input type="text" id="s_site_title" placeholder="সাজ্জাদ ইউনুস — লেখক"/></div>
+            <div class="field"><label>ফুটার কপিরাইট লাইন</label><input type="text" id="s_footer_copy" placeholder="© ২০২৫ সাজ্জাদ ইউনুস।"/></div>
+          </div>
+          <div class="save-row"><span class="save-status" id="st_general">✓ সংরক্ষিত</span><button class="btn btn-g" onclick="saveSettings('general')">সংরক্ষণ করুন</button></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- SETUP -->
+    <div class="pg" id="pg-setup">
+      <div class="ph"><div><div class="pt">Supabase সেটআপ</div><div class="ps">ধাপে ধাপে অনুসরণ করুন</div></div></div>
+
+      <div class="setup-guide">
+        <h3>🚀 Supabase সেটআপ গাইড</h3>
+        <div class="setup-steps">
+          <div class="setup-step"><p><strong>supabase.com</strong> এ গিয়ে ফ্রি অ্যাকাউন্ট খুলুন এবং একটি নতুন প্রজেক্ট তৈরি করুন।</p></div>
+          <div class="setup-step"><p>প্রজেক্টের <strong>SQL Editor</strong> এ গিয়ে নিচের SQL কোডটি কপি করে চালান — এটি আপনার দুটি টেবিল তৈরি করবে:</p>
+            <div class="sql-block">-- Posts টেবিল
+CREATE TABLE posts (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  title TEXT NOT NULL,
+  excerpt TEXT,
+  body TEXT,
+  category TEXT DEFAULT 'other',
+  cover_image TEXT,
+  featured BOOLEAN DEFAULT false,
+  published BOOLEAN DEFAULT false,
+  published_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Site settings টেবিল
+CREATE TABLE site_settings (
+  key TEXT PRIMARY KEY,
+  value TEXT,
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- Public read access (পাঠকরা পড়তে পারবে)
+ALTER TABLE posts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE site_settings ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "public read posts" ON posts FOR SELECT USING (published = true);
+CREATE POLICY "anon all posts" ON posts FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "public read settings" ON site_settings FOR SELECT USING (true);
+CREATE POLICY "anon all settings" ON site_settings FOR ALL USING (true) WITH CHECK (true);
+
+-- Image storage bucket
+INSERT INTO storage.buckets (id, name, public) VALUES ('post-images', 'post-images', true);
+CREATE POLICY "public images" ON storage.objects FOR SELECT USING (bucket_id = 'post-images');
+CREATE POLICY "upload images" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'post-images');</div>
+          </div>
+          <div class="setup-step"><p>প্রজেক্টের <strong>Settings → API</strong> থেকে আপনার <code>Project URL</code> এবং <code>anon public key</code> কপি করুন।</p></div>
+          <div class="setup-step"><p>নিচের ফর্মে credentials বসান এবং <strong>সংরক্ষণ করুন</strong> — তারপর <code>supabase.js</code> ফাইলে একই values বসান:</p>
+            <div class="cred-inputs">
+              <div class="cred-field"><label>Supabase Project URL</label><input type="text" id="cfgUrl" placeholder="https://xxxx.supabase.co"/></div>
+              <div class="cred-field"><label>Anon / Public Key</label><input type="text" id="cfgKey" placeholder="eyJh..."/></div>
+            </div>
+            <div style="margin-top:1rem;display:flex;gap:.75rem;align-items:center">
+              <button class="btn btn-g" onclick="testConnection()">সংযোগ পরীক্ষা করুন</button>
+              <span id="connStatus" style="font-size:.85rem;color:var(--ink-muted)"></span>
+            </div>
+          </div>
+          <div class="setup-step"><p>সংযোগ সফল হলে <strong>Netlify বা GitHub Pages</strong> এ তিনটি ফাইল আপলোড করুন এবং সাইট লাইভ করুন। ব্যস!</p></div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="confirm-ov" id="confirmOv">
+  <div class="confirm-box">
+    <h3>নিশ্চিত করুন</h3>
+    <p id="confirmMsg">এই লেখাটি মুছে ফেলবেন?</p>
+    <div class="confirm-actions">
+      <button class="btn btn-o" onclick="closeConfirm()">বাতিল</button>
+      <button class="btn btn-d" id="confirmOk">মুছুন</button>
+    </div>
+  </div>
+</div>
+
+<script src="supabase.js"></script>
+<script>
+const CATS = {probondho:'প্রবন্ধ',nibondho:'নিবন্ধ',column:'কলাম',research:'গবেষণা',onubad:'অনুবাদ',other:'অন্যান্য'};
+
+// ── AUTH ──────────────────────────────
+function doLogin() {
+  const pw = document.getElementById('pw').value;
+  if (AUTH.login(pw)) {
+    document.getElementById('loginScreen').classList.add('gone');
+    document.getElementById('app').classList.add('show');
+    initApp();
+  } else {
+    document.getElementById('loginErr').style.display='block';
+    document.getElementById('pw').value='';
+    document.getElementById('pw').focus();
+  }
+}
+function doLogout() { AUTH.logout(); location.reload(); }
+
+if (AUTH.isLoggedIn()) {
+  document.getElementById('loginScreen').classList.add('gone');
+  document.getElementById('app').classList.add('show');
+  initApp();
+}
+
+// ── NAV ───────────────────────────────
+function initApp() {
+  document.querySelectorAll('.nav-btn[data-pg]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+      btn.classList.add('on');
+      document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+      document.getElementById('pg-'+btn.dataset.pg).classList.add('on');
+      if (btn.dataset.pg==='posts') { loadAndRenderTable(); }
+      if (btn.dataset.pg==='dashboard') { loadDashboard(); }
+      if (btn.dataset.pg==='settings') { loadSettingsForm(); }
+    });
+  });
+  loadDashboard();
+  document.getElementById('eDate').value = new Date().toISOString().split('T')[0];
+}
+
+function goPage(name) {
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('on'));
+  document.querySelector(`.nav-btn[data-pg="${name}"]`)?.classList.add('on');
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.getElementById('pg-'+name).classList.add('on');
+}
+
+// ── DASHBOARD ─────────────────────────
+let cachedPosts = [];
+async function loadDashboard() {
+  if (!isSupabaseConfigured()) {
+    document.getElementById('statsGrid').innerHTML = '<div style="grid-column:1/-1;font-family:var(--sans);color:var(--ink-muted);font-size:.9rem;padding:1rem">Supabase সেটআপ করুন → <a href="#" onclick="goPage(\'setup\');return false" style="color:var(--accent)">Setup ট্যাব</a></div>';
+    return;
+  }
+  try {
+    cachedPosts = await SB.getPosts();
+    const pub   = cachedPosts.filter(p=>p.published).length;
+    const draft  = cachedPosts.filter(p=>!p.published).length;
+    const cats   = [...new Set(cachedPosts.map(p=>p.category))].length;
+    document.getElementById('statsGrid').innerHTML = `
+      <div class="stat"><div class="stat-n">${cachedPosts.length}</div><div class="stat-l">মোট লেখা</div></div>
+      <div class="stat"><div class="stat-n">${pub}</div><div class="stat-l">প্রকাশিত</div></div>
+      <div class="stat"><div class="stat-n">${draft}</div><div class="stat-l">ড্রাফট</div></div>
+      <div class="stat"><div class="stat-n">${cats}</div><div class="stat-l">বিভাগ</div></div>`;
+    const recent = cachedPosts.slice(0,5);
+    document.getElementById('recentList').innerHTML = !recent.length
+      ? '<p style="font-family:var(--sans);color:var(--ink-muted);font-size:.88rem">এখনো কোনো লেখা নেই।</p>'
+      : recent.map(p=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:.65rem 0;border-bottom:1px solid var(--paper-border);gap:1rem">
+          <div><div style="font-weight:600;font-size:.88rem">${p.featured?'⭐ ':''}${p.title}</div>
+          <div style="font-size:.73rem;color:var(--ink-muted);margin-top:.15rem">${CATS[p.category]||p.category}</div></div>
+          <div style="display:flex;gap:.4rem;flex-shrink:0"><button class="btn btn-o btn-sm" onclick="editPost('${p.id}')">সম্পাদনা</button>
+          <span class="badge ${p.published?'b-pub':'b-draft'}">${p.published?'প্রকাশিত':'ড্রাফট'}</span></div>
+        </div>`).join('');
+  } catch(e) { toast('ড্যাশবোর্ড লোড সমস্যা: '+e.message,'error'); }
+}
+
+// ── TABLE ─────────────────────────────
+async function loadAndRenderTable() {
+  const tbody = document.getElementById('tblBody');
+  tbody.innerHTML = '<tr class="loader-row"><td colspan="5"><div class="dots"><span></span><span></span><span></span></div></td></tr>';
+  try { cachedPosts = await SB.getPosts(); renderTable(); }
+  catch(e) { tbody.innerHTML=`<tr class="empty-row"><td colspan="5">লোড সমস্যা: ${e.message}</td></tr>`; }
+}
+function renderTable() {
+  const q   = (document.getElementById('searchQ')?.value||'').toLowerCase();
+  const cat  = document.getElementById('catF')?.value||'';
+  const pub  = document.getElementById('pubF')?.value||'';
+  let list   = cachedPosts;
+  if (q)   list = list.filter(p=>p.title.toLowerCase().includes(q)||(p.excerpt||'').toLowerCase().includes(q));
+  if (cat) list = list.filter(p=>p.category===cat);
+  if (pub==='pub')   list = list.filter(p=>p.published);
+  if (pub==='draft') list = list.filter(p=>!p.published);
+  document.getElementById('postsCnt').textContent = `মোট ${list.length}টি লেখা`;
+  const tbody = document.getElementById('tblBody');
+  if (!list.length) { tbody.innerHTML='<tr class="empty-row"><td colspan="5">কোনো লেখা পাওয়া যায়নি।</td></tr>'; return; }
+  tbody.innerHTML = list.map(p=>`<tr>
+    <td class="tbl-title">${p.featured?'⭐ ':''}${p.title}<div class="tbl-exc">${p.excerpt||''}</div></td>
+    <td><span class="badge b-cat">${CATS[p.category]||p.category}</span></td>
+    <td style="font-size:.78rem;color:var(--ink-muted);white-space:nowrap">${(p.published_at||p.created_at||'').split('T')[0]}</td>
+    <td><span class="badge ${p.published?'b-pub':'b-draft'}">${p.published?'প্রকাশিত':'ড্রাফট'}</span></td>
+    <td><div class="tbl-actions"><button class="btn btn-o btn-sm" onclick="editPost('${p.id}')">সম্পাদনা</button>
+    <button class="btn btn-d" onclick="confirmDelete('${p.id}')">মুছুন</button></div></td>
+  </tr>`).join('');
+}
+
+// ── EDITOR ────────────────────────────
+let currentImgUrl = '';
+
+function goNewPost() {
+  clearEditor();
+  document.getElementById('edTitle').textContent = 'নতুন লেখা';
+  document.getElementById('edSub').textContent   = 'নতুন একটি লেখা তৈরি করুন';
+  goPage('editor');
+}
+function clearEditor() {
+  document.getElementById('editingId').value = '';
+  document.getElementById('eTitle').value   = '';
+  document.getElementById('eExcerpt').value = '';
+  document.getElementById('eBody').innerHTML= '';
+  document.getElementById('eCat').value     = 'probondho';
+  document.getElementById('eDate').value    = new Date().toISOString().split('T')[0];
+  document.getElementById('ePub').checked   = true;
+  document.getElementById('eFeat').checked  = false;
+  currentImgUrl = '';
+  document.getElementById('imgUrl').value   = '';
+  document.getElementById('imgPreviewWrap').style.display='none';
+  document.getElementById('imgPlaceholder').style.display='block';
+  document.getElementById('imgStatus').textContent='';
+  syncTitleCount(); syncExcCount();
+}
+function editPost(id) {
+  const p = cachedPosts.find(x=>x.id===id);
+  if (!p) return;
+  document.getElementById('editingId').value = p.id;
+  document.getElementById('eTitle').value    = p.title||'';
+  document.getElementById('eExcerpt').value  = p.excerpt||'';
+  document.getElementById('eBody').innerHTML = p.body||'';
+  document.getElementById('eCat').value      = p.category||'probondho';
+  document.getElementById('eDate').value     = (p.published_at||p.created_at||new Date().toISOString()).split('T')[0];
+  document.getElementById('ePub').checked    = !!p.published;
+  document.getElementById('eFeat').checked   = !!p.featured;
+  currentImgUrl = p.cover_image||'';
+  document.getElementById('imgUrl').value = currentImgUrl;
+  if (currentImgUrl) { showImgPreview(currentImgUrl); } else { document.getElementById('imgPreviewWrap').style.display='none'; document.getElementById('imgPlaceholder').style.display='block'; }
+  document.getElementById('edTitle').textContent = 'লেখা সম্পাদনা';
+  document.getElementById('edSub').textContent   = p.title;
+  syncTitleCount(); syncExcCount();
+  goPage('editor');
+}
+
+function collectPost(published) {
+  const dateISO = document.getElementById('eDate').value;
+  return {
+    id:          document.getElementById('editingId').value || undefined,
+    title:       document.getElementById('eTitle').value.trim(),
+    excerpt:     document.getElementById('eExcerpt').value.trim(),
+    body:        document.getElementById('eBody').innerHTML.trim(),
+    category:    document.getElementById('eCat').value,
+    cover_image: currentImgUrl || null,
+    published:   published,
+    featured:    document.getElementById('eFeat').checked,
+    published_at: published ? (dateISO + 'T00:00:00Z') : null,
+  };
+}
+
+async function publishPost() {
+  const p = collectPost(true);
+  if (!p.title) { toast('শিরোনাম দিন', 'error'); return; }
+  if (!p.body || p.body==='<br>') { toast('মূল লেখা লিখুন', 'error'); return; }
+  const btn = document.getElementById('pubBtn');
+  btn.disabled=true; btn.textContent='প্রকাশ হচ্ছে...';
+  try {
+    if (p.featured) await SB.clearFeatured();
+    const res = await SB.upsertPost(p);
+    if (res && res[0]) { document.getElementById('editingId').value = res[0].id; cachedPosts = await SB.getPosts(); }
+    toast('✓ লেখা প্রকাশিত হয়েছে!', 'success');
+    document.getElementById('edTitle').textContent = 'লেখা সম্পাদনা';
+  } catch(e) { toast('সমস্যা হয়েছে: '+e.message,'error'); }
+  btn.disabled=false; btn.textContent='✓ প্রকাশ করুন';
+}
+async function saveDraft() {
+  const p = collectPost(false);
+  if (!p.title) { toast('শিরোনাম দিন','error'); return; }
+  try {
+    const res = await SB.upsertPost(p);
+    if (res && res[0]) { document.getElementById('editingId').value = res[0].id; cachedPosts = await SB.getPosts(); }
+    toast('খসড়া সংরক্ষিত হয়েছে', 'success');
+  } catch(e) { toast('সমস্যা: '+e.message,'error'); }
+}
+
+// ── EDITOR FORMAT ──────────────────────
+function fmt(cmd, val) { document.getElementById('eBody').focus(); document.execCommand(cmd, false, val||null); }
+function wrapBlock(tag) { document.getElementById('eBody').focus(); document.execCommand('formatBlock', false, tag); }
+function syncTitleCount() { document.getElementById('titleCnt').textContent = document.getElementById('eTitle').value.length + ' অক্ষর'; }
+function syncExcCount() { const l=document.getElementById('eExcerpt').value.length; const el=document.getElementById('exCnt'); el.textContent=l+' / ২০০'; el.style.color=l>200?'var(--accent)':'var(--ink-muted)'; }
+
+// ── IMAGE UPLOAD ───────────────────────
+function showImgPreview(url) {
+  document.getElementById('imgPreview').src = url;
+  document.getElementById('imgPreviewWrap').style.display = 'block';
+  document.getElementById('imgPlaceholder').style.display = 'none';
+}
+function removeImg() {
+  currentImgUrl = '';
+  document.getElementById('imgUrl').value = '';
+  document.getElementById('imgPreviewWrap').style.display = 'none';
+  document.getElementById('imgPlaceholder').style.display = 'block';
+}
+function setImgFromUrl(url) { if(url){ currentImgUrl=url; showImgPreview(url); } }
+
+async function handleImgFile(file) {
+  if (!file) return;
+  if (file.size > 5*1024*1024) { toast('ছবি ৫ MB এর বেশি হওয়া যাবে না','error'); return; }
+  const status = document.getElementById('imgStatus');
+  // Immediate local preview
+  const localUrl = URL.createObjectURL(file);
+  showImgPreview(localUrl);
+  if (!isSupabaseConfigured()) {
+    currentImgUrl = localUrl;
+    toast('⚠️ Supabase সেটআপ করুন — ছবি শুধু এই ডিভাইসে আছে', 'info');
+    return;
+  }
+  status.textContent = 'আপলোড হচ্ছে...';
+  try {
+    const url = await SB.uploadImage(file);
+    currentImgUrl = url;
+    document.getElementById('imgUrl').value = url;
+    status.textContent = '';
+    toast('ছবি আপলোড সফল!', 'success');
+  } catch(e) {
+    currentImgUrl = localUrl;
+    status.textContent = '';
+    toast('আপলোড সমস্যা — URL ম্যানুয়ালি দিন', 'error');
+  }
+}
+
+function imgDragOver(e) { e.preventDefault(); document.getElementById('imgDrop').classList.add('drag'); }
+function imgDragLeave() { document.getElementById('imgDrop').classList.remove('drag'); }
+function imgDrop(e) {
+  e.preventDefault();
+  document.getElementById('imgDrop').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) handleImgFile(file);
+}
+
+// ── DELETE ────────────────────────────
+let delId = null;
+function confirmDelete(id) {
+  delId = id;
+  document.getElementById('confirmOv').classList.add('open');
+  document.getElementById('confirmOk').onclick = async () => {
+    try { await SB.deletePost(delId); cachedPosts = await SB.getPosts(); renderTable(); loadDashboard(); toast('লেখা মুছে ফেলা হয়েছে','success'); }
+    catch(e){ toast('মুছতে সমস্যা: '+e.message,'error'); }
+    closeConfirm();
+  };
+}
+function closeConfirm() { document.getElementById('confirmOv').classList.remove('open'); }
+
+// ── SETTINGS ──────────────────────────
+const settingsMap = {
+  hero:    ['hero_name','hero_subtitle','hero_badge','hero_desc'],
+  author:  ['author_name','author_badge','author_bio','author_tags','author_photo'],
+  quote:   ['site_quote','site_quote_author'],
+  contact: ['contact_intro','contact_email','contact_twitter','contact_linkedin'],
+  general: ['site_title','footer_copy'],
+};
+async function loadSettingsForm() {
+  if (!isSupabaseConfigured()) return;
+  try {
+    const s = await SB.getSettings();
+    Object.entries(s).forEach(([k,v]) => {
+      const el = document.getElementById('s_'+k);
+      if (el) {
+        if (k==='author_tags') {
+          try { el.value = JSON.parse(v).join(', '); } catch{ el.value = v; }
+        } else { el.value = v||''; }
+      }
+    });
+  } catch(e){ toast('সেটিং লোড সমস্যা: '+e.message,'error'); }
+}
+async function saveSettings(group) {
+  const keys = settingsMap[group];
+  const statusEl = document.getElementById('st_'+group);
+  try {
+    for (const k of keys) {
+      const el = document.getElementById('s_'+k);
+      if (!el) continue;
+      let val = el.value;
+      if (k==='author_tags') {
+        const tags = val.split(',').map(t=>t.trim()).filter(Boolean);
+        val = JSON.stringify(tags);
+      }
+      await SB.setSetting(k, val);
+    }
+    statusEl.classList.add('show');
+    setTimeout(()=>statusEl.classList.remove('show'), 2500);
+    toast('✓ সেটিং সংরক্ষিত হয়েছে!','success');
+  } catch(e){ toast('সংরক্ষণ সমস্যা: '+e.message,'error'); }
+}
+
+// ── SETUP / CONNECTION TEST ────────────────────────────
+async function testConnection() {
+  const url = document.getElementById('cfgUrl').value.trim();
+  const key  = document.getElementById('cfgKey').value.trim();
+  const status = document.getElementById('connStatus');
+  if (!url || !key) { status.textContent = '⚠️ দুটো ফিল্ডই পূরণ করুন'; return; }
+  status.textContent = 'পরীক্ষা করা হচ্ছে...';
+  try {
+    const res = await fetch(`${url}/rest/v1/posts?select=id&limit=1`, {
+      headers: { 'apikey': key, 'Authorization': `Bearer ${key}` }
+    });
+    if (res.ok) {
+      status.style.color = 'var(--green)';
+      status.textContent = '✓ সংযোগ সফল! এখন supabase.js এ এই values বসান।';
+    } else {
+      status.style.color = 'var(--accent)';
+      status.textContent = '✕ সংযোগ ব্যর্থ (HTTP '+res.status+') — URL ও Key চেক করুন';
+    }
+  } catch(e) {
+    status.style.color = 'var(--accent)';
+    status.textContent = '✕ সংযোগ ব্যর্থ — URL সঠিক আছে কি?';
+  }
+}
+</script>
+</body>
+</html>
